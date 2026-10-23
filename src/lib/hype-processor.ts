@@ -42,7 +42,7 @@ export async function processVideo(file: File, onProgress: (p: Progress) => void
     if (!/Stream #.*Video:/.test(info)) throw new HypeError("This file isn't a readable video. Please choose an MP4, MOV or WEBM file.");
     if (!/Stream #.*Audio:/.test(info)) throw new HypeError("This video has no sound, so Hype Finder can't score its energy.");
     const m = info.match(/Duration: (\d+):(\d+):([\d.]+)/);
-    const duration = m ? +m[1] * 3600 + +m[2] * 60 + +m[3] : 0;
+    const duration = m ? +m[1]! * 3600 + +m[2]! * 60 + +m[3]! : 0;
     if (duration < 18) throw new HypeError("This video is too short. It needs to be at least about 18 seconds long.");
 
     onProgress({ stage: "audio", percent: 10, message: "Listening for loudness spikes and sudden changes…" });
