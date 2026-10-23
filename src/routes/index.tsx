@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Zap, CloudUpload, Link2, FileVideo, X, AudioLines, Sparkles, Smartphone, ShieldCheck, Check, Loader2,
+  Download, RotateCcw, AlertTriangle, Flame,
 } from "lucide-react";
+import type { Progress, ResultClip, Stage } from "@/lib/hype-processor";
 import { AppShell } from "@/components/AppShell";
 import { cn } from "@/lib/utils";
 import { validateFile, validateUrl, formatBytes, formatDuration } from "@/lib/upload";
@@ -25,11 +27,15 @@ type Source =
   | { kind: "file"; file: File; duration?: number; preview: string }
   | { kind: "url"; url: string };
 
-const STAGES = [
-  { title: "Analyzing audio", desc: "Detecting loudness spikes, shouting, laughter and crowd noise…" },
-  { title: "Finding exciting moments", desc: "Scanning and ranking the best clips…" },
-  { title: "Creating Shorts", desc: "Preparing your results…" },
+const STAGES: { id: Stage; title: string }[] = [
+  { id: "upload", title: "Uploading video" },
+  { id: "audio", title: "Analyzing audio" },
+  { id: "moments", title: "Finding exciting moments" },
+  { id: "clips", title: "Creating vertical clips" },
+  { id: "downloads", title: "Preparing downloads" },
 ];
+
+const fmtT = (t: number) => formatDuration(t);
 
 function Index() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,22 +43,29 @@ function Index() {
   const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
-  const [progress, setProgress] = useState<number | null>(null);
+  const [status, setStatus] = useState<"idle" | "running" | "done" | "failed">("idle");
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [clips, setClips] = useState<ResultClip[]>([]);
+  const [zipping, setZipping] = useState(false);
+  const running = useRef(false);
 
-  useEffect(() => {
-    if (progress === null || progress >= 100) return;
-    const t = setTimeout(() => setProgress((p) => Math.min(100, (p ?? 0) + 2)), 120);
-    return () => clearTimeout(t);
-  }, [progress]);
+  useEffect(() => () => clips.forEach((c) => URL.revokeObjectURL(c.url)), [clips]);
 
-  const processing = progress !== null && progress < 100;
+  const processing = status === "running";
+
+  function resetResults() {
+    setClips([]);
+    setStatus("idle");
+    setProgress(null);
+  }
 
   function pickFile(file?: File) {
-    if (!file) return;
+    if (!file || processing) return;
     const err = validateFile(file);
     if (err) return setError(err);
     setError(null);
     setUrl("");
+    resetResults();
     const preview = URL.createObjectURL(file);
     setSource({ kind: "file", file, preview });
     const v = document.createElement("video");
@@ -63,24 +76,81 @@ function Index() {
   }
 
   function clear() {
+    if (processing) return;
     if (source?.kind === "file") URL.revokeObjectURL(source.preview);
     setSource(null);
-    setProgress(null);
+    resetResults();
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  function start() {
-    if (source?.kind !== "file") {
+  async function start() {
+    if (running.current) return;
+    let file: File;
+    if (source?.kind === "file") file = source.file;
+    else {
       if (!url.trim()) return setError("Choose a video file or paste a direct video link.");
       const err = validateUrl(url);
       if (err) return setError(err);
-      setSource({ kind: "url", url: url.trim() });
+      running.current = true;
+      setStatus("running");
+      setError(null);
+      setProgress({ stage: "upload", percent: 1, message: "Downloading video from link…" });
+      try {
+        const res = await fetch(url.trim());
+        if (!res.ok) throw new Error();
+        const blob = await res.blob();
+        const name = new URL(url.trim()).pathname.split("/").pop() || "video.mp4";
+        file = new File([blob], name, { type: blob.type || "video/mp4" });
+        const fErr = validateFile(file);
+        if (fErr) throw new Error(fErr);
+      } catch (e) {
+        running.current = false;
+        setStatus("failed");
+        setError((e as Error).message || "We couldn't download that link. The site may block direct downloads — try downloading the file and uploading it instead.");
+        return;
+      }
     }
+    running.current = true;
+    setStatus("running");
     setError(null);
-    setProgress(0);
+    setClips([]);
+    setProgress({ stage: "upload", percent: 1, message: "Preparing…" });
+    try {
+      const { processVideo } = await import("@/lib/hype-processor");
+      const result = await processVideo(file, setProgress);
+      setClips(result);
+      setStatus("done");
+    } catch (e) {
+      console.error(e);
+      setStatus("failed");
+      setError(
+        e instanceof Error && e.constructor.name === "HypeError"
+          ? e.message
+          : "Processing failed. The video may be too large for your browser's memory or use an unsupported codec. Try a shorter MP4.",
+      );
+    } finally {
+      running.current = false;
+    }
   }
 
-  const stageIdx = progress === null ? -1 : progress >= 100 ? 3 : Math.floor(progress / 34);
+  async function downloadAll() {
+    setZipping(true);
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      clips.forEach((c) => zip.file(c.filename, c.blob));
+      const blob = await zip.generateAsync({ type: "blob", compression: "STORE" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "hype-finder-clips.zip";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+    } finally {
+      setZipping(false);
+    }
+  }
+
+  const stageIdx = progress ? STAGES.findIndex((s) => s.id === progress.stage) : -1;
 
   return (
     <AppShell>
@@ -171,42 +241,75 @@ function Index() {
               {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5 fill-current" />}
               {processing ? "Finding your hype…" : "Find My Hype"}
             </button>
-            <p className="mt-3 text-center text-xs text-muted-foreground">Supports MP4, MOV, WEBM • Max file size: 2 GB</p>
+            <p className="mt-3 text-center text-xs text-muted-foreground">Supports MP4, MOV, WEBM • Max file size: 2 GB (videos are processed on your device; under ~500 MB works best)</p>
             <p className="mt-1 text-center text-xs text-muted-foreground">Only upload videos you own or have permission to edit and publish.</p>
           </div>
 
-          {progress !== null && (
+          {progress && status !== "idle" && (
             <div className="rounded-2xl border border-border bg-card p-5">
               <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
-                  <h2 className="font-display text-lg font-bold">{progress >= 100 ? "Analysis complete" : "Analyzing your video…"}</h2>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {source?.kind === "file" ? source.file.name : source?.kind === "url" ? source.url : ""}
-                  </p>
+                  <h2 className="font-display text-lg font-bold">
+                    {status === "done" ? "Your clips are ready" : status === "failed" ? "Processing stopped" : "Analyzing your video…"}
+                  </h2>
+                  <p className="truncate text-sm text-muted-foreground">{status === "failed" ? "See the message above." : progress.message}</p>
                 </div>
-                <span className="shrink-0 font-bold text-primary">{progress}%</span>
+                <span className="shrink-0 font-bold text-primary">{progress.percent}%</span>
               </div>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-gradient-primary transition-all" style={{ width: `${progress}%` }} />
+                <div className={cn("h-full rounded-full transition-all", status === "failed" ? "bg-muted-foreground" : "bg-gradient-primary")} style={{ width: `${progress.percent}%` }} />
               </div>
-              <ol className="mt-5 grid gap-4 sm:grid-cols-3">
-                {STAGES.map((s, i) => (
-                  <li key={s.title} className="flex gap-3">
-                    <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-full border", i < stageIdx ? "border-primary bg-primary text-primary-foreground" : i === stageIdx ? "border-primary text-primary" : "border-border text-muted-foreground")}>
-                      {i < stageIdx ? <Check className="h-4 w-4" /> : i === stageIdx ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="h-2 w-2 rounded-full bg-current" />}
-                    </span>
-                    <div>
+              <ol className="mt-5 grid gap-3 sm:grid-cols-5">
+                {STAGES.map((s, i) => {
+                  const done = status === "done" || i < stageIdx;
+                  const active = !done && i === stageIdx;
+                  return (
+                    <li key={s.id} className="flex items-center gap-2 sm:flex-col sm:items-start">
+                      <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-full border", done ? "border-primary bg-primary text-primary-foreground" : active ? "border-primary text-primary" : "border-border text-muted-foreground")}>
+                        {done ? <Check className="h-4 w-4" /> : active && status === "failed" ? <AlertTriangle className="h-4 w-4" /> : active ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="h-2 w-2 rounded-full bg-current" />}
+                      </span>
                       <p className="text-sm font-semibold">{s.title}</p>
-                      <p className="text-xs text-muted-foreground">{s.desc}</p>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ol>
-              {progress >= 100 && (
-                <p className="mt-5 rounded-xl border border-border bg-elevated p-4 text-sm text-muted-foreground">
-                  This is a preview of the processing flow. Real clip detection and downloads come in the next step.
-                </p>
+              {status === "failed" && (
+                <button onClick={start} className="mt-5 inline-flex items-center gap-2 rounded-xl border border-primary px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10">
+                  <RotateCcw className="h-4 w-4" /> Retry
+                </button>
               )}
+            </div>
+          )}
+
+          {status === "done" && clips.length > 0 && (
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+                <div className="min-w-0">
+                  <h2 className="font-display text-xl font-bold">Your Top {clips.length} Hype {clips.length === 1 ? "Moment" : "Moments"}</h2>
+                  <p className="text-sm text-muted-foreground">Ranked by hype score (audio loudness and sudden energy rises).</p>
+                </div>
+                <button onClick={downloadAll} disabled={zipping} className="inline-flex items-center gap-2 rounded-xl bg-gradient-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60">
+                  {zipping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  <span className="hidden sm:inline">Download All ({clips.length})</span><span className="sm:hidden">All</span>
+                </button>
+              </div>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {clips.map((c, i) => (
+                  <div key={c.filename} className="overflow-hidden rounded-xl border border-border bg-elevated">
+                    <div className="relative">
+                      <video src={c.url} controls playsInline preload="metadata" className="aspect-[9/16] w-full bg-background object-cover" />
+                      <span className="absolute left-2 top-2 grid h-7 w-7 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground">{i + 1}</span>
+                    </div>
+                    <div className="space-y-2 p-3">
+                      <p className="flex items-center gap-1 font-bold"><Flame className="h-4 w-4 text-primary" />{c.score.toFixed(1)}/10</p>
+                      <p className="text-xs text-muted-foreground">{fmtT(c.start)} – {fmtT(c.end)} ({Math.round(c.end - c.start)}s)</p>
+                      <a href={c.url} download={c.filename} className="flex items-center justify-center gap-2 rounded-lg bg-gradient-primary py-2 text-sm font-semibold text-primary-foreground">
+                        <Download className="h-4 w-4" /> Download
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>
