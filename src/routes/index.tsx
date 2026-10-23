@@ -124,7 +124,7 @@ function Index() {
       console.error(e);
       setStatus("failed");
       setError(
-        e instanceof Error && e.constructor.name === "HypeError"
+        e instanceof Error && "isHype" in e
           ? e.message
           : "Processing failed. The video may be too large for your browser's memory or use an unsupported codec. Try a shorter MP4.",
       );

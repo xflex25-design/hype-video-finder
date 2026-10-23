@@ -21,7 +21,7 @@ async function getFFmpeg() {
   return ff;
 }
 
-export class HypeError extends Error {}
+export class HypeError extends Error { readonly isHype = true; }
 
 export async function processVideo(file: File, onProgress: (p: Progress) => void): Promise<ResultClip[]> {
   onProgress({ stage: "upload", percent: 2, message: "Loading the video engine…" });
