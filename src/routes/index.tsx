@@ -293,7 +293,7 @@ function Index() {
                   <span className="hidden sm:inline">Download All ({clips.length})</span><span className="sm:hidden">All</span>
                 </button>
               </div>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3">
                 {clips.map((c, i) => (
                   <div key={c.filename} className="overflow-hidden rounded-xl border border-border bg-elevated">
                     <div className="relative">
