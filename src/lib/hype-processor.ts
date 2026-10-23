@@ -62,7 +62,7 @@ export async function processVideo(file: File, onProgress: (p: Progress) => void
 
     const results: ResultClip[] = [];
     for (let i = 0; i < clips.length; i++) {
-      const c = clips[i];
+      const c = clips[i]!;
       const base = 40 + (i / clips.length) * 55;
       const span = 55 / clips.length;
       const label = `Creating vertical clip ${i + 1} of ${clips.length}…`;
