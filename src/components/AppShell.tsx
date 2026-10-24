@@ -12,7 +12,7 @@ const nav = [
 export function Logo() {
   return (
     <Link to="/" aria-label="Insaka home" className="block w-[160px] max-w-full">
-      <img src="/logo.png" alt="Insaka" className="h-[50px] w-full object-contain" />
+      <img src="/logo.png" alt="Insaka" className="h-[50px] w-full object-contain bg-sidebar rounded-lg p-1" />
     </Link>
   );
 }
