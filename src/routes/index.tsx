@@ -8,6 +8,7 @@ import type { Progress, ResultClip, Stage } from "@/lib/hype-processor";
 import { AppShell } from "@/components/AppShell";
 import { cn } from "@/lib/utils";
 import { validateFile, validateUrl, formatBytes, formatDuration } from "@/lib/upload";
+import { extractYouTubeId, isYouTubeInput, INVALID_YOUTUBE_URL } from "@/lib/youtube";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -52,6 +53,13 @@ function Index() {
   useEffect(() => () => clips.forEach((c) => URL.revokeObjectURL(c.url)), [clips]);
 
   const processing = status === "running";
+  const youtubeId = extractYouTubeId(url);
+
+  function updateUrl(value: string) {
+    const id = extractYouTubeId(value);
+    setUrl(id ?? value.trim());
+    setError(value.trim() && isYouTubeInput(value) && !id ? INVALID_YOUTUBE_URL : null);
+  }
 
   function resetResults() {
     setClips([]);
@@ -91,6 +99,9 @@ function Index() {
       if (!url.trim()) return setError("Choose a video file or paste a direct video link.");
       const err = validateUrl(url);
       if (err) return setError(err);
+      if (extractYouTubeId(url)) {
+        return setError("YouTube preview is ready, but downloading isn't connected yet. Upload a video file you own or have permission to use.");
+      }
       running.current = true;
       setStatus("running");
       setError(null);
@@ -223,11 +234,19 @@ function Index() {
                   <input
                     value={url}
                     disabled={processing}
-                    onChange={(e) => { setUrl(e.target.value); setError(null); }}
-                    placeholder="Paste a direct video link (e.g. https://example.com/video.mp4)"
+                    aria-label="YouTube or direct video link"
+                    maxLength={2048}
+                    onChange={(e) => updateUrl(e.target.value)}
+                    onPaste={(e) => { e.preventDefault(); updateUrl(e.clipboardData.getData("text")); }}
+                    placeholder="Paste YouTube link, video ID or direct video link"
                     className="h-12 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                   />
                 </label>
+                {youtubeId && (
+                  <div className="mt-3 overflow-hidden rounded-lg border border-border">
+                    <img src={`https://img.youtube.com/vi/${youtubeId}/0.jpg`} alt={`YouTube video ${youtubeId} thumbnail`} className="aspect-video w-full object-cover" />
+                  </div>
+                )}
               </>
             )}
 
@@ -303,6 +322,7 @@ function Index() {
                     <div className="space-y-2 p-3">
                       <p className="flex items-center gap-1 font-bold"><Flame className="h-4 w-4 text-primary" />{c.score.toFixed(1)}/10</p>
                       <p className="text-xs text-muted-foreground">{fmtT(c.start)} – {fmtT(c.end)} ({Math.round(c.end - c.start)}s)</p>
+                      <p className="text-xs text-muted-foreground">{c.captionCount ? "Auto captions included" : "No speech detected"}</p>
                       <a href={c.url} download={c.filename} className="flex items-center justify-center gap-2 rounded-lg bg-gradient-primary py-2 text-sm font-semibold text-primary-foreground">
                         <Download className="h-4 w-4" /> Download
                       </a>
