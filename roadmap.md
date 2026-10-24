@@ -1,5 +1,5 @@
-- [ ] Install official logo and favicon without changing the layout.
-- [ ] Accept and clean YouTube URLs; show thumbnails and invalid-input errors.
+- [x] Install official logo and favicon without changing the layout.
+- [x] Accept and clean YouTube URLs; show thumbnails and invalid-input errors.
 - [ ] Connect and verify actual YouTube source downloads (requires a reliable download service).
-- [ ] Add and verify automatic captions for generated clips.
+- [x] Add and verify automatic captions for generated clips (real MP4 decoded with H.264/AAC; browser playback verification pending codec support).
 - [ ] Test and publish; explain GitHub sync status limits.

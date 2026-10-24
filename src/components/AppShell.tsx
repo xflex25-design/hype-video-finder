@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Scissors, HelpCircle, Zap, Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import officialLogo from "@/assets/official-logo.png.asset.json";
+import officialLogo from "@/assets/official-logo-display.png.asset.json";
 
 const nav = [
   { to: "/", label: "Home", icon: Home },
@@ -13,9 +13,7 @@ const nav = [
 export function Logo() {
   return (
     <Link to="/" aria-label="Hype Finder home" className="block w-[208px] max-w-full">
-      <div className="relative h-[132px] overflow-hidden">
-        <img src={officialLogo.url} alt="Hype Finder" className="absolute left-0 top-[-61px] w-full max-w-none" />
-      </div>
+      <img src={officialLogo.url} alt="Hype Finder" className="h-[100px] w-full object-contain" />
     </Link>
   );
 }
