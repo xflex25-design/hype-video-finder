@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Scissors, HelpCircle, Zap, Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import officialLogo from "@/assets/official-logo-display.png.asset.json";
+import officialLogo from "@/assets/official-logo-fitted.png.asset.json";
 
 const nav = [
   { to: "/", label: "Home", icon: Home },
