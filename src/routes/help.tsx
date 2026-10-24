@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 
 const faqs = [
   { q: "Which formats are supported?", a: "MP4, MOV and WEBM files up to 2 GB." },
-  { q: "Can I paste a YouTube link?", a: "No. Please paste a direct link to a video file (ending in .mp4, .mov or .webm), or upload the file." },
+  { q: "Can I paste a YouTube link?", a: "YouTube links and video IDs show a thumbnail preview. YouTube downloading is not connected yet; upload a video file you have permission to use to create clips." },
   { q: "How long are the clips?", a: "Clips are 15–45 seconds, vertical 9:16, ready for Shorts, Reels and TikTok." },
   { q: "What videos can I upload?", a: "Only videos you own or have permission to edit and publish." },
 ];

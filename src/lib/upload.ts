@@ -1,3 +1,5 @@
+import { extractYouTubeId, isYouTubeInput, INVALID_YOUTUBE_URL } from "./youtube";
+
 export const MAX_FILE_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB
 export const ALLOWED_EXT = ["mp4", "mov", "webm"];
 
@@ -9,6 +11,8 @@ export function validateFile(file: { name: string; size: number }): string | nul
 }
 
 export function validateUrl(raw: string): string | null {
+  if (extractYouTubeId(raw)) return null;
+  if (isYouTubeInput(raw)) return INVALID_YOUTUBE_URL;
   let url: URL;
   try {
     url = new URL(raw.trim());
@@ -16,8 +20,6 @@ export function validateUrl(raw: string): string | null {
     return "Please enter a valid link starting with https://";
   }
   if (!/^https?:$/.test(url.protocol)) return "Link must start with http:// or https://";
-  if (/(^|\.)(youtube\.com|youtu\.be)$/i.test(url.hostname))
-    return "YouTube page links aren't supported. Please paste a direct link to a video file (.mp4, .mov, .webm).";
   const ext = url.pathname.split(".").pop()?.toLowerCase() ?? "";
   if (!ALLOWED_EXT.includes(ext))
     return "Link must point directly to a video file ending in .mp4, .mov or .webm.";
