@@ -352,23 +352,31 @@ function Index() {
               {/* Center Video Area */}
               <div className="flex flex-col gap-3 min-w-0">
                 {/* Video Container */}
-                <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black group">
+                <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black group flex items-center justify-center">
                   {source?.kind === "file" ? (
                     <video
                       src={source.preview}
                       controls
                       playsInline
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-contain max-h-[420px]"
                     />
                   ) : (
-                    <div className="relative h-full w-full flex items-center justify-center">
+                    <div className="relative h-full w-full flex items-center justify-center bg-black/95">
                       <video
-                        src="/demo-video.mp4"
-                        controls
+                        src="/demo-short.mp4"
+                        autoPlay
+                        muted
+                        loop
                         playsInline
+                        controls
                         poster="/assets/aistudio/Screenshot_20261024-150704_Chrome_a124f630.jpg"
-                        className="h-full w-full object-cover"
+                        className="h-full w-auto max-h-[420px] rounded-xl object-contain drop-shadow-[0_0_25px_rgba(229,57,53,0.35)]"
                       />
+                      {/* Short Badge overlay */}
+                      <div className="pointer-events-none absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-red-600/90 px-2.5 py-1 text-[10px] font-bold text-white shadow-md backdrop-blur">
+                        <Zap className="h-3 w-3 fill-current" />
+                        <span>AI Short Preview</span>
+                      </div>
                     </div>
                   )}
                 </div>
