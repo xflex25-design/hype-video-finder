@@ -11,9 +11,10 @@ describe("upload rules", () => {
   it("rejects files over 2 GB", () => {
     expect(validateFile({ name: "a.mp4", size: 2 * 1024 ** 3 + 1 })).not.toBeNull();
   });
-  it("rejects YouTube links", () => {
-    expect(validateUrl("https://www.youtube.com/watch?v=x")).toMatch(/YouTube/);
-    expect(validateUrl("https://youtu.be/x")).toMatch(/YouTube/);
+  it("accepts valid YouTube links and rejects invalid IDs", () => {
+    expect(validateUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBeNull();
+    expect(validateUrl("https://youtu.be/dQw4w9WgXcQ")).toBeNull();
+    expect(validateUrl("https://youtu.be/x")).toMatch(/Invalid YouTube URL/);
   });
   it("accepts direct video file links", () => {
     expect(validateUrl("https://example.com/video.mp4")).toBeNull();
