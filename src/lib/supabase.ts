@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { type ViralAnalysis } from "./viral-scorer";
 
 const rawUrl = (import.meta.env.VITE_SUPABASE_URL || "").trim();
 const supabaseUrl = rawUrl.replace(/\/rest\/v1\/?$/i, "").replace(/\/+$/, "");
@@ -49,6 +50,7 @@ export interface SavedClip {
     end: number;
     reason?: string;
   };
+  viralScore?: ViralAnalysis;
   created_at: string;
 }
 

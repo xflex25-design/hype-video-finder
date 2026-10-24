@@ -9,6 +9,7 @@ import { AppShell } from "@/components/AppShell";
 import { cn } from "@/lib/utils";
 import { validateFile, validateUrl, formatBytes, formatDuration } from "@/lib/upload";
 import { extractYouTubeId, isYouTubeInput, INVALID_YOUTUBE_URL } from "@/lib/youtube";
+import { ViralScoreCard } from "@/components/ViralScoreCard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -372,31 +373,45 @@ function Index() {
                   <h2 className="font-display text-xl font-bold">Your Top {clips.length} Hype {clips.length === 1 ? "Moment" : "Moments"}</h2>
                   <p className="text-sm text-muted-foreground">Ranked by hype score (audio loudness and sudden energy rises).</p>
                 </div>
-                <button onClick={downloadAll} disabled={zipping} className="inline-flex items-center gap-2 rounded-xl bg-gradient-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60">
-                  {zipping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  <span className="hidden sm:inline">Download All ({clips.length})</span><span className="sm:hidden">All</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <select 
+                    className="rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none"
+                    onChange={(e) => setClips([...clips].sort((a, b) => e.target.value === "viral" ? b.viralScore.score - a.viralScore.score : 0))}
+                  >
+                    <option value="default">Sort by Hype</option>
+                    <option value="viral">Sort by Viral Score</option>
+                  </select>
+                  <button onClick={downloadAll} disabled={zipping} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60">
+                    {zipping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                    <span className="hidden sm:inline">Download All ({clips.length})</span><span className="sm:hidden">All</span>
+                  </button>
+                </div>
               </div>
-              <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3">
-                {clips.map((c, i) => (
-                  <div key={c.filename} className="overflow-hidden rounded-xl border border-border bg-elevated">
+              <div className="mt-5 grid gap-6">
+                {[...clips].sort((a,b) => b.viralScore.score - a.viralScore.score).map((c, i) => (
+                  <div key={c.url} className="grid md:grid-cols-[300px_1fr] gap-6 overflow-hidden rounded-2xl border border-border bg-card p-4">
                     <div className="relative">
-                      <video src={c.url} controls playsInline preload="metadata" className="aspect-[9/16] w-full bg-background object-cover" />
-                      <span className="absolute left-2 top-2 grid h-7 w-7 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground">{i + 1}</span>
+                      <video src={c.url} controls playsInline preload="metadata" className="aspect-[9/16] w-full rounded-xl bg-background object-cover" />
+                      <div className="absolute top-3 right-3 w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg" style={{ backgroundColor: c.viralScore.score >= 80 ? "#E53935" : c.viralScore.score >= 50 ? "#FB8C00" : "#757575" }}>
+                        {c.viralScore.score}/100
+                      </div>
                     </div>
-                    <div className="space-y-2 p-3">
-                      <p className="flex items-center gap-1 font-bold"><Flame className="h-4 w-4 text-primary" />{c.score.toFixed(1)}/10</p>
-                      <p className="text-xs text-muted-foreground">{fmtT(c.start)} – {fmtT(c.end)} ({Math.round(c.end - c.start)}s)</p>
-                      <p className="text-xs text-muted-foreground">{c.captionCount ? "Auto captions included" : "No speech detected"}</p>
-                      <a href={c.url} download={c.filename} className="flex items-center justify-center gap-2 rounded-lg bg-gradient-primary py-2 text-sm font-semibold text-primary-foreground">
-                        <Download className="h-4 w-4" /> Download
-                      </a>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-bold">Moment #{i + 1}</h3>
+                        <a href={c.url} download={c.filename} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+                          <Download className="h-4 w-4" /> Download Clip
+                        </a>
+                      </div>
+                      <ViralScoreCard score={c.viralScore.score} label={c.viralScore.label} reasons={c.viralScore.reasons} />
+                      <p className="text-sm text-muted-foreground">{fmtT(c.start)} – {fmtT(c.end)} ({Math.round(c.end - c.start)}s)</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
+
         </section>
 
         <aside className="h-fit rounded-2xl border border-border bg-card p-6">

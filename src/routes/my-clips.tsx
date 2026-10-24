@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Scissors, Play, Trash2, Clock, Sparkles, LogIn, ExternalLink } from "lucide-react";
+import { Scissors, Trash2, Clock, Sparkles, ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserClips, deleteUserClip, type SavedClip } from "@/lib/supabase";
+import { ViralScoreCard } from "@/components/ViralScoreCard";
 
 export const Route = createFileRoute("/my-clips")({
   head: () => ({
@@ -110,62 +111,51 @@ function MyClipsPage() {
             {clips.map((clip) => (
               <div
                 key={clip.id}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:border-primary/50"
+                className="grid md:grid-cols-[300px_1fr] gap-6 overflow-hidden rounded-2xl border border-border bg-card p-4"
               >
-                <div className="relative aspect-video w-full bg-muted/40">
+                <div className="relative">
                   {clip.video_url ? (
                     <video
                       src={clip.video_url}
-                      className="h-full w-full object-cover"
+                      className="aspect-[9/16] w-full rounded-xl bg-background object-cover"
                       controls
                     />
                   ) : (
-                    <div className="grid h-full w-full place-items-center bg-gradient-to-br from-primary/10 to-card">
+                    <div className="aspect-[9/16] w-full rounded-xl grid place-items-center bg-gradient-to-br from-primary/10 to-card">
                       <Sparkles className="h-8 w-8 text-primary" />
                     </div>
                   )}
-                  <div className="absolute left-2.5 top-2.5 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur">
-                    Hype: {Math.round(clip.hype_score * 100)}%
-                  </div>
+                  {clip.viralScore && (
+                    <div className="absolute top-3 right-3 w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg" style={{ backgroundColor: clip.viralScore.score >= 80 ? "#E53935" : clip.viralScore.score >= 50 ? "#FB8C00" : "#757575" }}>
+                      {clip.viralScore.score}/100
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex flex-1 flex-col justify-between p-4">
-                  <div>
-                    <h3 className="line-clamp-1 font-semibold text-foreground">{clip.title}</h3>
-                    <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>{Math.round(clip.duration)}s</span>
-                      <span>•</span>
-                      <span>{new Date(clip.created_at).toLocaleDateString()}</span>
-                    </div>
-                    {clip.clip_data?.reason && (
-                      <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
-                        {clip.clip_data.reason}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-                    {clip.source_url ? (
-                      <a
-                        href={clip.source_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                <div className="flex flex-1 flex-col justify-between p-2">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold">{clip.title}</h3>
+                      <button
+                        onClick={() => handleDelete(clip.id)}
+                        title="Delete clip"
+                        className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
                       >
-                        <ExternalLink className="h-3 w-3" />
-                        Original Source
-                      </a>
-                    ) : (
-                      <div />
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    {clip.viralScore && (
+                      <ViralScoreCard score={clip.viralScore.score} label={clip.viralScore.label} reasons={clip.viralScore.reasons} />
                     )}
-                    <button
-                      onClick={() => handleDelete(clip.id)}
-                      title="Delete clip"
-                      className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {Math.round(clip.duration)}s</div>
+                      <div>{new Date(clip.created_at).toLocaleDateString()}</div>
+                      {clip.source_url && (
+                        <a href={clip.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-foreground">
+                          <ExternalLink className="h-3.5 w-3.5" /> Original Source
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
