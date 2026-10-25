@@ -14,13 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clips: {
+        Row: {
+          clip_data: Json
+          created_at: string
+          duration: number | null
+          hype_score: number | null
+          id: string
+          source_url: string | null
+          title: string
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          clip_data?: Json
+          created_at?: string
+          duration?: number | null
+          hype_score?: number | null
+          id?: string
+          source_url?: string | null
+          title: string
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          clip_data?: Json
+          created_at?: string
+          duration?: number | null
+          hype_score?: number | null
+          id?: string
+          source_url?: string | null
+          title?: string
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clips_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          credits: number
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          credits?: number
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          credits?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      spend_credits: { Args: { _amount: number }; Returns: number }
     }
     Enums: {
       [_ in never]: never
