@@ -4,17 +4,10 @@ import { toBlobURL } from "@ffmpeg/util";
 import { findClips, levelsFromPcm, type Clip } from "./hype-engine";
 import { transcribeClip, captionText } from "./captions";
 import captionFont from "@/assets/caption-font.ttf.asset.json";
-import { analyzeClip, type ViralAnalysis } from "./viral-scorer";
 
 export type Stage = "upload" | "audio" | "moments" | "clips" | "downloads";
 export type Progress = { stage: Stage; percent: number; message: string };
-export type ResultClip = Clip & { 
-  url: string; 
-  blob: Blob; 
-  filename: string; 
-  captionCount: number;
-  viralScore: ViralAnalysis;
-};
+export type ResultClip = Clip & { url: string; blob: Blob; filename: string; captionCount: number };
 
 const CORE = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm";
 let instance: FFmpeg | null = null;
@@ -112,18 +105,7 @@ export async function processVideo(file: File, onProgress: (p: Progress) => void
       const data = (await ff.readFile(out)) as Uint8Array;
       await ff.deleteFile(out);
       const blob = new Blob([new Uint8Array(data)], { type: "video/mp4" });
-      
-      const transcript = captions.map(c => c.text).join(" ");
-      const viralScore = await analyzeClip(transcript, c.end - c.start);
-      
-      results.push({ 
-        ...c, 
-        blob, 
-        url: URL.createObjectURL(blob), 
-        filename: out, 
-        captionCount: captions.length,
-        viralScore
-      });
+      results.push({ ...c, blob, url: URL.createObjectURL(blob), filename: out, captionCount: captions.length });
     }
     onProgress({ stage: "downloads", percent: 100, message: `Done — ${results.length} clips ready.` });
     return results;

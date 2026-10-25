@@ -3,5 +3,5 @@
 - [ ] Connect and verify actual YouTube source downloads (requires a reliable download service).
 - [x] Add and verify automatic captions for generated clips (real downloaded H.264/AAC MP4 fully decoded; sandbox Chromium lacks these playback codecs).
 - [x] Test: 22 tests passed; both Rickroll links clean to ID and display thumbnail; invalid ID shows requested error; mobile has no horizontal overflow.
-- [ ] Publish tested changes.
+- [ ] Publish tested changes: publishing approval was declined; waiting for user authorization.
 - [ ] GitHub sync confirmation: blocked because Git connection status is only available to the user in project Settings → Git.

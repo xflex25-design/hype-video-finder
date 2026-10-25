@@ -78,8 +78,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "google-site-verification", content: "google5381a056419580bb" },
-      { name: "google-site-verification", content: "google5381a056419580bb.html" },
     ],
     links: [
       {
@@ -112,19 +110,13 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-import { AuthProvider } from "@/contexts/AuthContext";
-import { AuthModal } from "@/components/AuthModal";
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <AuthModal />
-      </AuthProvider>
+      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+      <Outlet />
     </QueryClientProvider>
   );
 }
