@@ -1,0 +1,98 @@
+{
+  "source": "github:https://github.com/xflex25-design/hype-video-finder",
+  "branch": "agent-check-deployment-readiness-fa95",
+  "base_commit": "84ad968 (identical to this project's main)",
+  "capabilities": [
+    {
+      "capability": "application code (auth UI, viral score, clips library, youtube resolver)",
+      "source": "github branch",
+      "outcome": "ported into this project, adapted to Lovable Cloud + AI Gateway + TanStack server routes",
+      "status": "migrate",
+      "next_action": "none"
+    },
+    {
+      "capability": "database schema (profiles with credits, clips)",
+      "source": "supabase-schema.sql on branch",
+      "outcome": "recreated in Lovable Cloud migration",
+      "status": "migrate",
+      "next_action": "none"
+    },
+    {
+      "capability": "application records (clips rows) + user records (profiles rows)",
+      "source": "external Supabase project the user deployed to; no export attached",
+      "outcome": "not present; app and schema built without existing records",
+      "status": "pending",
+      "next_action": "request CSV/JSON exports of profiles and clips after the preview"
+    },
+    {
+      "capability": "auth identities (email/password, Google)",
+      "source": "external Supabase Auth",
+      "outcome": "replaced with Lovable Cloud auth (email/password + Google + Lovable); first-login email verification and new password",
+      "status": "migrate",
+      "next_action": "verify sign-up, sign-in, and access to own records"
+    },
+    {
+      "capability": "authorization (RLS: own profile, own clips)",
+      "source": "supabase-schema.sql",
+      "outcome": "recreated as Cloud RLS policies with GRANTs",
+      "status": "migrate",
+      "next_action": "verify another user's rows are inaccessible"
+    },
+    {
+      "capability": "uploaded file bytes (public/uploads screenshots, public/logo.png)",
+      "source": "branch commits",
+      "outcome": "not carried over: screenshots are unreferenced by app code; logo.png is the 'Insaka' rebrand logo, which conflicts with the standing Hype Finder brand/logo rule",
+      "status": "recorded",
+      "next_action": "ask the user whether the Insaka rebrand + logo swap is wanted"
+    },
+    {
+      "capability": "AI provider (Gemini 1.5 Flash, browser-side VITE_GEMINI_API_KEY)",
+      "source": "src/lib/viral-scorer.ts",
+      "outcome": "replaced with Lovable AI Gateway server call (no browser key); viral-score capability preserved",
+      "status": "migrate",
+      "next_action": "test a real gateway call"
+    },
+    {
+      "capability": "public endpoint /api/youtube-stream (Invidious/Piped resolver)",
+      "source": "src/server.ts",
+      "outcome": "preserved as a TanStack server route under src/routes/api/public/",
+      "status": "migrate",
+      "next_action": "verify it resolves or fails with a clear message"
+    },
+    {
+      "capability": "Google Search Console site verification",
+      "source": "google5381a056419580bb.html + meta tags",
+      "outcome": "preserved (public file + root meta)",
+      "status": "migrate",
+      "next_action": "none"
+    },
+    {
+      "capability": "deployment target (Netlify: netlify.toml, nitro preset netlify, dev host/port)",
+      "source": "branch commits",
+      "outcome": "not carried over: this project publishes through Lovable hosting; the Netlify preset would change the build output",
+      "status": "recorded",
+      "next_action": "user can still export the code and deploy to Netlify themselves if they want that host"
+    },
+    {
+      "capability": "AI Studio scaffolding (index.html, metadata.json, GEMINI_API_KEY/APP_URL env)",
+      "source": "branch commits",
+      "outcome": "not carried over: not used by this TanStack Start app; head metadata lives in route head()",
+      "status": "recorded",
+      "next_action": "none"
+    },
+    {
+      "capability": "secrets (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_GEMINI_API_KEY)",
+      "source": ".env.example on branch",
+      "outcome": "not requested: Cloud supplies backend credentials, AI Gateway supplies AI access; no user key needed",
+      "status": "recorded",
+      "next_action": "none"
+    },
+    {
+      "capability": "verification",
+      "source": "n/a",
+      "outcome": "build, tests, sign-up/sign-in round trip, clip save/read, viral score call, youtube resolver",
+      "status": "pending",
+      "next_action": "run after implementation"
+    }
+  ]
+}
